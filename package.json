@@ -8,6 +8,7 @@
 	"license": "MIT",
 	"scripts": {
 		"lint": "prettier --write src/*.html src/*.css src/*.js *.json *.md .prettierrc",
+		"build": "cp -r src/ dist/",
   		"serve": "npx http-server ./src -p 3000"
 	},
 	"devDependencies": {
