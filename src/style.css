@@ -199,7 +199,7 @@ button {
 }
 
 #bpm-value:empty:before {
-	content: "–";
+	content: "\1F91A";
 	color: var(--text-color-muted);
 }
 
