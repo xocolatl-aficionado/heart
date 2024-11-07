@@ -161,22 +161,26 @@ button {
 	margin-bottom: 0;
 }
 
-/* BPM circle */
 #bpm-display-container {
-	height: 320px;
-	width: 320px;
-	max-width: 70vw;
-	max-height: 70vw;
-	margin: 0 auto;
+	position: absolute;
+	height: 200px;
+	width: 280px;
+	max-width: 60vw;
+	max-height: 60vw;
+	margin: 0 auto; /* Set margin to center horizontally */
 	border: 9px solid var(--graph-color);
-	border-radius: 100%;
+	border-radius: 30px;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
-	margin: 0em auto 3em auto;
 	cursor: pointer;
+	background: var(--bpm-display-background);
+	top: 20px; /* Adjust to move the box closer to the top */
+	left: 50%;
+	transform: translateX(-50%);
 }
+
 
 #bpm-display {
 	text-align: center;
