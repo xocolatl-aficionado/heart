@@ -1,6 +1,17 @@
 "use strict";
 
 const heartRateMonitor = (function () {
+
+	const breathingCircle = document.getElementById("breathing-circle");
+
+	function startBreathingAnimation() {
+		breathingCircle.style.animationPlayState = "running";
+	}
+
+	function stopBreathingAnimation() {
+		breathingCircle.style.animationPlayState = "paused";
+	}
+
 	// Size of sampling image
 	const IMAGE_WIDTH = 30;
 	const IMAGE_HEIGHT = 30;
@@ -117,7 +128,13 @@ const heartRateMonitor = (function () {
 	};
 
 	publicMethods.toggleMonitoring = () => {
-		MONITORING ? stopMonitoring() : startMonitoring();
+		if (MONITORING) {
+			stopMonitoring();
+			stopBreathingAnimation();
+		} else {
+			startMonitoring();
+			startBreathingAnimation();
+		}
 	};
 
 	const getCamera = async () => {
@@ -127,6 +144,8 @@ const heartRateMonitor = (function () {
 		);
 		return cameras[cameras.length - 1];
 	};
+
+
 
 	const startMonitoring = async () => {
 		resetBuffer();
