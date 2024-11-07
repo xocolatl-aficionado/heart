@@ -263,3 +263,28 @@ button {
 .modal .modal-box .content {
 	overflow-y: auto;
 }
+#breathing-instructions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-top: 20px;
+    font-size: 1.5em;
+    text-align: center;
+    color: #fff;
+}
+
+#breathing-text p {
+    margin: 0;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+#inhale {
+    color: #00ff00;
+}
+
+#exhale {
+    color: #ff0000;
+}
+

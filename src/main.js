@@ -40,7 +40,7 @@ const heartRateMonitor = (function () {
 	let GRAPH_WIDTH;
 
 	// Whether to print debug messages
-	let DEBUG = false;
+	let DEBUG = true;
 
 	// Video stream object
 	let VIDEO_STREAM;
@@ -170,6 +170,7 @@ const heartRateMonitor = (function () {
 	const monitorLoop = () => {
 		processFrame();
 		if (MONITORING) {
+			
 			window.requestAnimationFrame(monitorLoop);
 		}
 	};
@@ -244,8 +245,22 @@ const heartRateMonitor = (function () {
 		// TODO: Store BPM values in array and display moving average
 		if (bpm) {
 			setBpmDisplay(Math.round(bpm));
+			displayBreathingInstructions(bpm); 
 		}
 		drawGraph(dataStats);
+	};
+	const displayBreathingInstructions = (bpm) => {
+		const instructionsElement = document.querySelector("#breathing-instructions");
+	
+		if (bpm < 60) {
+			instructionsElement.innerHTML = "Your heart rate is low. Try inhaling deeply for 4 seconds...";
+		} else if (bpm >= 60 && bpm < 100) {
+			instructionsElement.innerHTML = "You're in a moderate heart rate zone. Breathe in slowly for 4 seconds...";
+		} else if (bpm >= 100 && bpm < 130) {
+			instructionsElement.innerHTML = "Your heart rate is elevated. Try slowing your breathing. Inhale for 3 seconds...";
+		} else {
+			instructionsElement.innerHTML = "Your heart rate is high. Focus on calming your breath. Breathe deeply...";
+		}
 	};
 
 	const analyzeData = (samples) => {
