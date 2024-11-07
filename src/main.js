@@ -11,7 +11,7 @@ const heartRateMonitor = (function () {
 	function stopBreathingAnimation() {
 		breathingCircle.style.animationPlayState = "paused";
 	}
-
+	
 	// Size of sampling image
 	const IMAGE_WIDTH = 30;
 	const IMAGE_HEIGHT = 30;
@@ -237,7 +237,7 @@ const heartRateMonitor = (function () {
 	const setBpmDisplay = (bpm) => {
 		ON_BPM_CHANGE(bpm);
 	};
-
+	
 	const processFrame = () => {
 		// Draw the current video frame onto the canvas
 		SAMPLING_CONTEXT.drawImage(
@@ -248,8 +248,8 @@ const heartRateMonitor = (function () {
 			IMAGE_HEIGHT
 		);
 
-		// Get a sample from the canvas pixels
 		const value = averageBrightness(SAMPLING_CANVAS, SAMPLING_CONTEXT);
+		
 		const time = Date.now();
 
 		SAMPLE_BUFFER.push({ value, time });
@@ -267,17 +267,55 @@ const heartRateMonitor = (function () {
 		drawGraph(dataStats);
 	};
 
-	const analyzeData = (samples) => {
-		// Get the mean average value of the samples
-		const average =
-			samples.map((sample) => sample.value).reduce((a, c) => a + c) /
-			samples.length;
+	const applyStdDevFilter = (samples) => {
 
-		// Find the lowest and highest sample values in the data
-		// Used for both calculating bpm and fitting the graph in the canvas
-		let min = samples[0].value;
-		let max = samples[0].value;
-		samples.forEach((sample) => {
+		//console.log("Applying filter, samples: ", samples); // Log the samples data to check its structure
+
+
+		// Calculate the mean of the sample values
+		const mean = samples.reduce((acc, sample) => acc + sample.value, 0) / samples.length;
+	
+		// Calculate the standard deviation of the sample values
+		const stdDev = Math.sqrt(
+			samples.reduce((acc, sample) => acc + Math.pow(sample.value - mean, 2), 0) / samples.length
+		);
+	
+		// Define a threshold for outliers (e.g., 2 standard deviations)
+		const threshold = 2;
+	
+		// Filter out the outliers (those beyond 2 standard deviations)
+		const filtered = samples.filter((sample) => Math.abs(sample.value - mean) <= threshold * stdDev);
+		
+		// If all samples are outliers, return the original set (avoid returning empty array)
+		return filtered.length > 0 ? filtered : samples;
+	};
+	
+	const analyzeData = (samples) => {
+
+		//console.log ("SAMPLES ARRAY: "+ samples)
+		// Apply standard deviation filter to remove outliers
+		const filteredSamples = applyStdDevFilter(samples);
+	
+		// If we have fewer than 2 samples after filtering, don't calculate further
+		if (filteredSamples.length < 2) {
+	
+			return {
+				average: 0,
+				min: 0,
+				max: 0,
+				range: 0,
+				crossings: []
+			};
+		}
+	
+		// Get the mean average value of the filtered samples
+		const average =
+			filteredSamples.map((sample) => sample.value).reduce((a, c) => a + c, 0) / filteredSamples.length;
+	
+		// Find the lowest and highest sample values in the filtered data
+		let min = filteredSamples[0].value;
+		let max = filteredSamples[0].value;
+		filteredSamples.forEach((sample) => {
 			if (sample.value > max) {
 				max = sample.value;
 			}
@@ -285,12 +323,13 @@ const heartRateMonitor = (function () {
 				min = sample.value;
 			}
 		});
-
+	
 		// The range of the change in values
-		// For a good measurement it should be between  ~ 0.002 - 0.02
 		const range = max - min;
-
-		const crossings = getAverageCrossings(samples, average);
+	
+		// Get the crossing points (edges) in the filtered data
+		const crossings = getAverageCrossings(filteredSamples, average);
+	
 		return {
 			average,
 			min,
@@ -299,6 +338,7 @@ const heartRateMonitor = (function () {
 			crossings,
 		};
 	};
+	
 
 	const getAverageCrossings = (samples, average) => {
 		// Get each sample at points where the graph has crossed below the average level
