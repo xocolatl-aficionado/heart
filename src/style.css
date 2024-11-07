@@ -270,6 +270,7 @@ button {
 #breathing-circle-container {
     display: flex;
     justify-content: center;
+	margin-top: 10%;
     margin-bottom: 2em;
 }
 
