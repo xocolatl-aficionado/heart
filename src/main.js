@@ -47,18 +47,58 @@ const heartRateMonitor = (function () {
 };
 
 // Function to detect peaks (local maxima) in the data
- const findPeaks = (data, height = 0.55, distance = 3, prominence = 0.02) => {
+const findPeaks = (data, width = 2, distance = 5, prominence = 0.001) => {
     const peaks = [];
+
+    // Loop through the data to identify peaks
     for (let i = 1; i < data.length - 1; i++) {
-        if (data[i] > data[i - 1] && data[i] > data[i + 1] && data[i] >= height) {
-            const left = Math.max(...data.slice(i - distance, i));
-            const right = Math.max(...data.slice(i + 1, i + 1 + distance));
-            if (data[i] > left + prominence && data[i] > right + prominence) {
-                peaks.push(i);
+        // Check if the current point is a local maximum
+        if (data[i] > data[i - 1] && data[i] > data[i + 1]) {
+            // Simplify prominence check
+            const leftMax = Math.max(...data.slice(Math.max(0, i - distance), i));
+            const rightMax = Math.max(...data.slice(i + 1, i + 1 + distance));
+
+            const leftProminence = data[i] - leftMax;
+            const rightProminence = data[i] - rightMax;
+
+            // Debug the prominences
+            console.log(`Index: ${i}, Value: ${data[i]}, Left Prominence: ${leftProminence}, Right Prominence: ${rightProminence}`);
+
+            // Check if it satisfies the prominence threshold
+            if (leftProminence >= prominence && rightProminence >= prominence) {
+                // Check for width condition (optional simplification)
+                const leftWidth = findWidth(data, i, -1, width);
+                const rightWidth = findWidth(data, i, 1, width);
+
+                console.log(`Index: ${i}, Left Width: ${leftWidth}, Right Width: ${rightWidth}`);
+
+                // Only consider it a peak if it satisfies the width condition
+                if (leftWidth >= width && rightWidth >= width) {
+                    peaks.push(i);
+                }
             }
         }
     }
+
     return peaks;
+};
+
+// Helper function to find the width of the peak on one side
+const findWidth = (data, peakIndex, direction, minWidth) => {
+    let count = 0;
+    let i = peakIndex;
+
+    // Traverse in the specified direction to check for width
+    while (
+        i >= 0 &&
+        i < data.length &&
+        data[i] > data[peakIndex] - minWidth * 0.01 // Adjust based on prominence
+    ) {
+        count++;
+        i += direction;
+    }
+
+    return count;
 };
 
 // Function to calculate heart rate (BPM) from peak intervals
@@ -406,7 +446,7 @@ const getHeartRate = (heartRates) => {
 		const smoothedData = movingAverage(cleanedData, 3);
 	
 		// Step 4: Detect peaks in the smoothed data
-		const peaks = findPeaks(smoothedData, 0.55, 3, 0.02);
+		const peaks = findPeaks(smoothedData);
 	
 		// Step 5: Calculate the heart rate (BPM)
 		const heartRates = calculateHeartRate(peaks, 60);
