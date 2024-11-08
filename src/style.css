@@ -294,10 +294,10 @@ button {
     }
 }
 .feedback-message {
-    font-size: 18px;
-	margin-bottom: 30px;
+    font-size: 1rem;
+    color: #ff6666; /* Red color for visibility */
+    margin-top: 5px;
     text-align: center;
-    color: #007BFF; /* Optional: Adjust color as needed */
 }
 
 
