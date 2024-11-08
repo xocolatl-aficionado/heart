@@ -19,6 +19,9 @@ const heartRateMonitor = (function () {
 	// Array of measured samples
 	const SAMPLE_BUFFER = [];
 
+	const BRIGHTNESS_BUFFER_SIZE = 30; // About half a second at 60fps
+	let brightnessBuffer = [];
+
 	// Max 5 seconds of samples (at 60 samples per second)
 	// Measurement isn't dependant on frame rate but the visual speed of the graph is
 	const MAX_SAMPLES = 60 * 5;
@@ -68,6 +71,43 @@ const heartRateMonitor = (function () {
 
 	// Publicly available methods & variables
 	const publicMethods = {};
+	// Function to check if the user's finger placement is correct and stable
+	function checkFingerPlacement(canvas, context) {
+		// Calculate the average brightness using your existing function
+		const brightness = averageBrightness(canvas, context);
+
+		// Add the current brightness to the buffer
+		brightnessBuffer.push(brightness);
+		if (brightnessBuffer.length > BRIGHTNESS_BUFFER_SIZE) {
+			brightnessBuffer.shift(); // Remove the oldest value to maintain buffer size
+		}
+
+		// Set thresholds for feedback based on average brightness level
+		const minBrightness = 0.1;
+		const maxBrightness = 0.6;
+
+		// Check if brightness is within a good range
+		if (brightness < minBrightness) {
+			showFeedbackMessage("Pressing too hard, lighten your touch.");
+		} else if (brightness > maxBrightness) {
+			showFeedbackMessage("Cover the camera fully with your finger.");
+		} else {
+			// Check for stability if brightness is in the correct range
+			const stability = calculateStability(brightnessBuffer);
+			if (stability > 0.02) { // Adjust this threshold as needed
+				showFeedbackMessage("Hold steady, finger is moving too much.");
+			} else {
+				showFeedbackMessage("Perfect! Hold steady for accurate readings.");
+			}
+		}
+	}
+
+	// Function to calculate the standard deviation of brightness values in the buffer
+	function calculateStability(buffer) {
+		const mean = buffer.reduce((sum, value) => sum + value, 0) / buffer.length;
+		const variance = buffer.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / buffer.length;
+		return Math.sqrt(variance);
+	}
 
 	// Get an average brightness reading
 	const averageBrightness = (canvas, context) => {
@@ -91,6 +131,12 @@ const heartRateMonitor = (function () {
 		// Scale to 0 ... 1
 		return avg / 255;
 	};
+
+	function showFeedbackMessage(message) {
+		const feedbackElement = document.getElementById('feedback');
+		feedbackElement.textContent = message;
+		feedbackElement.style.color = "#007BFF"; // Optional: Change color for better visibility
+	}
 
 	publicMethods.initialize = (configuration) => {
 		VIDEO_ELEMENT = configuration.videoElement;
@@ -247,6 +293,9 @@ const heartRateMonitor = (function () {
 			IMAGE_WIDTH,
 			IMAGE_HEIGHT
 		);
+
+		// Check if the finger is positioned correctly
+		checkFingerPlacement(SAMPLING_CANVAS, SAMPLING_CONTEXT);
 
 		const value = averageBrightness(SAMPLING_CANVAS, SAMPLING_CONTEXT);
 		

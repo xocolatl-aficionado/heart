@@ -164,7 +164,7 @@ button {
 #bpm-display-container {
 	position: absolute;
 	height: 150px;
-	width: 280px;
+	width: 370px;
 	max-width: 60vw;
 	max-height: 60vw;
 	margin: 0 auto; /* Set margin to center horizontally */
@@ -293,4 +293,11 @@ button {
         transform: scale(1); /* Return to original size for exhale */
     }
 }
+.feedback-message {
+    font-size: 18px;
+	margin-bottom: 30px;
+    text-align: center;
+    color: #007BFF; /* Optional: Adjust color as needed */
+}
+
 
