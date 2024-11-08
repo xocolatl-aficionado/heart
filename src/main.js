@@ -1,6 +1,84 @@
 "use strict";
 
 const heartRateMonitor = (function () {
+	////////////////////////////////////HELPERS////////////////////////////////////
+
+// Helper function to calculate the percentile of an array
+ const percentile = (arr, p) => {
+    arr.sort((a, b) => a - b);
+    const index = Math.floor((p / 100) * (arr.length - 1));
+    return arr[index];
+};
+
+// Function to remove outliers using the IQR method
+ const removeOutliersIQR = (data, factor = 1.5) => {
+    const Q1 = percentile(data, 25);
+    const Q3 = percentile(data, 75);
+    const IQR = Q3 - Q1;
+    const lowerBound = Q1 - factor * IQR;
+    const upperBound = Q3 + factor * IQR;
+
+    let outliers = 0;
+    const cleanedData = data.map(value => {
+        if (value >= lowerBound && value <= upperBound) {
+            return value;
+        } else {
+            outliers++;
+            return NaN;
+        }
+    });
+
+    console.log(`Number of outliers removed: ${outliers}`);
+    return cleanedData;
+};
+
+// Function to apply a moving average filter to smooth the data
+ const movingAverage = (data, windowSize) => {
+    const result = [];
+    for (let i = 0; i < data.length - windowSize + 1; i++) {
+        result.push(data.slice(i, i + windowSize).reduce((acc, val) => acc + val, 0) / windowSize);
+    }
+    return result;
+};
+
+// Function to detect peaks (local maxima) in the data
+ const findPeaks = (data, height = 0.55, distance = 3, prominence = 0.02) => {
+    const peaks = [];
+    for (let i = 1; i < data.length - 1; i++) {
+        if (data[i] > data[i - 1] && data[i] > data[i + 1] && data[i] >= height) {
+            const left = Math.max(...data.slice(i - distance, i));
+            const right = Math.max(...data.slice(i + 1, i + 1 + distance));
+            if (data[i] > left + prominence && data[i] > right + prominence) {
+                peaks.push(i);
+            }
+        }
+    }
+    return peaks;
+};
+
+// Function to calculate heart rate (BPM) from peak intervals
+ const calculateHeartRate = (peaks, frameRate = 60) => {
+    const timeInterval = 1 / frameRate;
+    const peakTimes = peaks.map(i => i * timeInterval); // Convert peak indices to time in seconds
+
+    const timeIntervals = peakTimes.slice(1).map((time, i) => time - peakTimes[i]);
+    const heartRates = timeIntervals.map(interval => 60 / interval); // BPM = 60 / time interval in seconds
+
+    return heartRates;
+};
+
+// Function to get the calculated heart rate
+const getHeartRate = (heartRates) => {
+    const averageHeartRate = heartRates.reduce((acc, bpm) => acc + bpm, 0) / heartRates.length;
+    console.log(`Detected heart rate: ${averageHeartRate.toFixed(2)} BPM`);
+
+    heartRates.forEach((bpm, i) => {
+        console.log(`Interval ${i + 1}: ${bpm.toFixed(2)} BPM`);
+    });
+    return averageHeartRate
+};
+
+////////////////////////////////////!HELPERS////////////////////////////////////
 
 	const breathingCircle = document.getElementById("breathing-circle");
 
@@ -283,6 +361,65 @@ const heartRateMonitor = (function () {
 	const setBpmDisplay = (bpm) => {
 		ON_BPM_CHANGE(bpm);
 	};
+
+	function saveDataAsJson() {
+		// Get the current date and time
+		const now = new Date();
+		
+		// Format the timestamp (e.g., "2024-11-08_14-30-45")
+		const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
+		
+		// Create the JSON data
+		const jsonData = JSON.stringify(SAMPLE_BUFFER, null, 2);
+		
+		// Create a blob and a download link
+		const blob = new Blob([jsonData], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		
+		// Set the filename with the timestamp
+		a.href = url;
+		a.download = `heart_rate_data_${timestamp}.json`;
+		
+		// Trigger the download
+		document.body.appendChild(a);
+		a.click();
+		
+		// Clean up
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
+	}
+
+	const processHeartRateData = (sampleBuffer) => {
+		// Step 1: Extract values from SAMPLE_BUFFER
+		const dataValues = sampleBuffer.map(sample => sample.value);
+	
+		// Step 2: Remove outliers using IQR method
+		const cleanedData = removeOutliersIQR(dataValues, 1.5);
+	
+		// Step 3: Smooth the data with a moving average filter (optional)
+		const smoothedData = movingAverage(cleanedData, 3);
+	
+		// Step 4: Detect peaks in the smoothed data
+		const peaks = findPeaks(smoothedData, 0.55, 3, 0.02);
+	
+		// Step 5: Calculate the heart rate (BPM)
+		const heartRates = calculateHeartRate(peaks, 60);
+	
+		// Step 6: Display the heart rate
+		const bpm = getHeartRate(heartRates);
+	
+		// Step 7: Create a dataStats object for graphing (for scaling)
+		const dataStats = {
+			min: Math.min(...smoothedData),
+			max: Math.max(...smoothedData)
+		};
+	
+		// Return processed data and stats
+		return { smoothedData, peaks, bpm, dataStats };
+	};
+	
+	
 	
 	const processFrame = () => {
 		// Draw the current video frame onto the canvas
@@ -306,16 +443,30 @@ const heartRateMonitor = (function () {
 			SAMPLE_BUFFER.shift();
 		}
 
-		const dataStats = analyzeData(SAMPLE_BUFFER);
-		const bpm = calculateBpm(dataStats.crossings);
+		//const dataStats = analyzeData(SAMPLE_BUFFER);
+		//const bpm = calculateBpm(dataStats.crossings);
+
+		
 
 		// TODO: Store BPM values in array and display moving average
+		
+		if (DEBUG) {
+			console.log("Graph Data:", SAMPLE_BUFFER);
+		}
+		const { smoothedData, peaks, bpm, dataStats } = processHeartRateData(SAMPLE_BUFFER);
 		if (bpm) {
 			setBpmDisplay(Math.round(bpm));
 		}
 		drawGraph(dataStats);
 	};
 
+	document.addEventListener("keydown", (event) => {
+		if (event.key === 's') {
+			console.log("Saving heart rate data...");
+			saveDataAsJson();
+		}
+	});
+	
 	const applyStdDevFilter = (samples) => {
 
 		//console.log("Applying filter, samples: ", samples); // Log the samples data to check its structure
@@ -420,6 +571,8 @@ const heartRateMonitor = (function () {
 			(samples.length - 1);
 		return 60000 / averageInterval;
 	};
+
+
 
 	const drawGraph = (dataStats) => {
 		// Scaling of sample window to the graph width
