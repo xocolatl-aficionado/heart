@@ -22,7 +22,7 @@ const heartRateMonitor = (function () {
 	// Calculate the mean of the data (including outliers initially)
     const mean = data.reduce((acc, value) => acc + value, 0) / data.length;
 	// Log the mean to make sure it's valid
-    //console.log("Calculated mean:", mean);
+    // console.log("Calculated mean:", mean);
 	
     const cleanedData = data.map(value => {
         if (value >= lowerBound && value <= upperBound) {
@@ -470,7 +470,10 @@ const getHeartRate = (heartRates) => {
 			console.log("Saving heart rate data...");
 			saveDataAsJson();
 		}
-	});
+	}
+);
+	const graphCanvas = document.getElementById('graph-canvas');
+	graphCanvas.addEventListener('click', saveDataAsJson);
 	
 	const applyStdDevFilter = (samples) => {
 
