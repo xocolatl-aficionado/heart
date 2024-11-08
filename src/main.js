@@ -19,12 +19,17 @@ const heartRateMonitor = (function () {
     const upperBound = Q3 + factor * IQR;
 
     let outliers = 0;
+	// Calculate the mean of the data (including outliers initially)
+    const mean = data.reduce((acc, value) => acc + value, 0) / data.length;
+	// Log the mean to make sure it's valid
+    //console.log("Calculated mean:", mean);
+	
     const cleanedData = data.map(value => {
         if (value >= lowerBound && value <= upperBound) {
             return value;
         } else {
             outliers++;
-            return NaN;
+            return mean;
         }
     });
 
