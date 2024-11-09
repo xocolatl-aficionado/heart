@@ -7,7 +7,7 @@
 			content="width=device-width, initial-scale=1, user-scalable=no"
 		/>
 		<link rel="stylesheet" type="text/css" href="style.css" id="style" />
-		<title>💓 Heart Rate Monitor</title>
+		<title>Heart Rate Monitor</title>
 		<style>
 			:root {
 				/* Variables for both color schemes */
@@ -45,12 +45,7 @@
 	<body>
 		<div id="app">
 			<div class="main-view">
-				<header>
-					<div>
-						<h1>Heart Rate Monitor</h1>
-						<small>Tap the circle to start / stop</small>
-					</div>
-				</header>
+				
 
 				<main>
 					<section id="bpm-display-container">
@@ -58,8 +53,13 @@
 							<output id="bpm-value" title="Heart rate"></output>
 							<label>bpm</label>
 						</div>
+						<div id="feedback" class="feedback-message"></div>
 					</section>
-
+					
+					<section id="breathing-circle-container">
+						<div id="breathing-circle"></div>
+					</section>
+					
 					<section id="graph-container">
 						<canvas id="graph-canvas"></canvas>
 					</section>
