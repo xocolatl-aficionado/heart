@@ -2,7 +2,29 @@
 
 const heartRateMonitor = (function () {
 	////////////////////////////////////HELPERS////////////////////////////////////
-
+	const sendHeartRateDataToBackend = async (data) => {
+		try {
+			const response = await fetch('http://127.0.0.1:5000/get_bpm', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ data: data })  // Send the heart rate data
+			});
+	
+			const result = await response.json();
+			if (result.bpm) {
+				console.log("Calculated BPM:", result.bpm);
+				return result;
+			} else {
+				console.error("Error:", result.error);
+			}
+		} catch (error) {
+			console.error("Error sending data to backend:", error);
+		}
+	};
+	
+	
 // Helper function to calculate the percentile of an array
  const percentile = (arr, p) => {
     arr.sort((a, b) => a - b);
@@ -466,7 +488,7 @@ const getHeartRate = (heartRates) => {
 	
 	
 	
-	const processFrame = () => {
+	const processFrame = async () => {
 		// Draw the current video frame onto the canvas
 		SAMPLING_CONTEXT.drawImage(
 			VIDEO_ELEMENT,
@@ -488,21 +510,31 @@ const getHeartRate = (heartRates) => {
 			SAMPLE_BUFFER.shift();
 		}
 
-		//const dataStats = analyzeData(SAMPLE_BUFFER);
-		//const bpm = calculateBpm(dataStats.crossings);
+		try{
+			const responseFromBackend = await sendHeartRateDataToBackend(SAMPLE_BUFFER);
+        
+        if (DEBUG) {
+            console.log("Graph Data:", SAMPLE_BUFFER);
+        }
 
-		
+        // Assuming the backend returns data like { bpm, dataStats }
+        const { bpm, dataStats } = responseFromBackend;
 
-		// TODO: Store BPM values in array and display moving average
+        // Update the BPM display (if the backend returns a bpm)
+        if (bpm) {
+            setBpmDisplay(Math.round(bpm));  // Update the BPM display
+        }
+
+        // Draw the graph with the dataStats received from the backend
+        if (dataStats) {
+            // Pass dataStats to the graph drawing function
+            drawGraph(dataStats);
+        }
+		}
+		catch (error) {
+			console.error("Error processing heart rate data:", error);
+		}
 		
-		if (DEBUG) {
-			console.log("Graph Data:", SAMPLE_BUFFER);
-		}
-		const { smoothedData, peaks, bpm, dataStats } = processHeartRateData(SAMPLE_BUFFER);
-		if (bpm) {
-			setBpmDisplay(Math.round(bpm));
-		}
-		drawGraph(dataStats);
 	};
 
 	document.addEventListener("keydown", (event) => {
