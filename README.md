@@ -1,7 +1,11 @@
 
 #### Demo
-See [demo](breathein.netlify.app) on the Chrome browser on your phone. 
+See [demo](breathein.netlify.app) on the Chrome browser on your phone. Works for only Android presently.
 
+#### Features
+- Touch the box on top of screen. The flashlight should turn on, and thereafter place the finger on the back camera and visualize your heartbeat. Breathe as the breathing circle indicates. 
+- To debug values, touch the graph (either on phone or desktop) to download a JSON of values and run the code described in the [Testing](#testing) section. See sample JSON in the repo for format.
+  
 #### Architecture
 ```
 +---------------------+
@@ -54,10 +58,113 @@ See [demo](breathein.netlify.app) on the Chrome browser on your phone.
 - BPM Calculation: The time between detected peaks is used to calculate the beats per minute (BPM).
 - Real-Time Feedback: The app provides real-time guidance based on the heart rate and panic levels.
 
+#### Testing
+- Code to test the backend server:
+```
+import requests
+import json
+
+# Define the URL of your deployed endpoint
+url = "https://e4a0-159-2-29-32.ngrok-free.app/get_bpm"
+
+# Sample input data (list of dictionaries with 'value' and 'time')
+sample_data = {
+    "data": [
+        {"value": 0.65, "time": 1731115030342},
+        {"value": 0.67, "time": 1731115030351},
+        {"value": 0.70, "time": 1731115030360},
+        {"value": 1.20, "time": 1731115030400},  # Outlier
+        {"value": 0.72, "time": 1731115030500},
+        {"value": 0.69, "time": 1731115030600},
+        {"value": 0.68, "time": 1731115030700}
+    ]
+}
+
+# Send a POST request with the sample data
+try:
+    response = requests.post(url, json=sample_data)
+    
+    # Check if the request was successful
+    if response.status_code == 200:
+        print("Response received successfully.")
+        print(json.dumps(response.json(), indent=2))
+    else:
+        print(f"Failed with status code: {response.status_code}")
+        print("Response content:", response.text)
+
+except Exception as e:
+    print("Error while sending the request:", e)
+
+```
+- Code that debugs and graphs the downloaded JSON:
+```
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
+
+# Function to remove outliers using IQR (Interquartile Range) method
+def remove_outliers_iqr(data, factor=1.5):
+    Q1 = np.percentile(data, 25)
+    Q3 = np.percentile(data, 75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - factor * IQR
+    upper_bound = Q3 + factor * IQR
+
+    outliers = 0
+    cleaned_data = []
+    for x in data:
+        if lower_bound <= x <= upper_bound:
+            cleaned_data.append(x)
+        else:
+            cleaned_data.append(np.nan)
+            outliers += 1
+    
+    print(f"Number of outliers removed: {outliers}")
+    return cleaned_data
+
+
+# Function to apply moving average smoothing
+def moving_average(data, window_size):
+    return np.convolve(data, np.ones(window_size)/window_size, mode='valid')
+
+import json
+import numpy as np
+
+# Read the JSON file
+with open('/Users/adi/Downloads/heart_rate_data_2024-11-09_10-44-47.json', 'r') as file:
+    data = json.load(file)
+
+# Extract the 'value' field into a NumPy array
+data = np.array([entry['value'] for entry in data])
+
+
+# Step 1: Remove outliers using IQR method
+cleaned_data = remove_outliers_iqr(data, factor=1.5)
+
+# Step 2: Smooth the data with a moving average filter (optional)
+smoothed_data = moving_average(cleaned_data, window_size=3)
+
+# Step 3: Detect peaks (local maxima) in the smoothed data
+peaks, properties = find_peaks(smoothed_data, width=2, distance=5, prominence=0.02)
+
+# Plot the data and detected peaks
+plt.plot(smoothed_data, label='Smoothed Data')
+plt.scatter(peaks, smoothed_data[peaks], color='red', label='Detected Peaks')
+plt.legend()
+plt.xlabel('Time')
+plt.ylabel('Signal Amplitude')
+plt.title('Heartbeat Detection (With Outlier Removal)')
+plt.show()
+
+# Print detected peak indices
+print(f"Detected peak indices: {peaks}")
+
+```
+
 #### Dependencies
 
 - ```npm install ```
-- Every commit to the ```adi/feature``` branch will be auto deployed to the demo url (Netlify).
+- Every commit to the ```adi/feature```, or ```faizan/feature``` or ```main``` branch will be auto deployed to the respective demo url (Netlify). 
  
 - Need to run the backend separately (``` python3 backend.py```) on a local machine and expose it via ngrok. The Ngrok url is currently hardcoded into the codebase, but this will change each time ngrok is restarted. Please set acordingly as per [docs](https://ngrok.com/docs/getting-started/). 
 
