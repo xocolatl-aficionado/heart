@@ -1,12 +1,15 @@
 
 #### Demo
-See [demo](breathein.netlify.app) on the Chrome browser on your phone. Works for only Android presently.
+
+See [demo](breathein.netlify.app) on the Chrome browser on your phone. Works for only Android presently. Needs to have the backend running via Ngrok to get heart beats! 
 
 #### Features
+
 - Touch the box on top of screen. The flashlight should turn on, and thereafter place the finger on the back camera and visualize your heartbeat. Breathe as the breathing circle indicates. 
 - To debug values, touch the graph (either on phone or desktop) to download a JSON of values and run the code described in the [Testing](#testing) section. See sample JSON in the repo for format.
   
 #### Architecture
+
 ```
 +---------------------+
 |    User Input       |
@@ -51,6 +54,7 @@ See [demo](breathein.netlify.app) on the Chrome browser on your phone. Works for
 ```
 
 #### Getting the heart rates right
+
 - Heart Rate Measurement: The app detects heart rate by analyzing video frames and measuring finger brightness.
 - Peak Detection: SciPy is used to find peaks in the brightness data to calculate heart rate.
 - Outlier Handling: Outliers in data are filtered using a method that removes extreme values.
@@ -59,6 +63,12 @@ See [demo](breathein.netlify.app) on the Chrome browser on your phone. Works for
 - Real-Time Feedback: The app provides real-time guidance based on the heart rate and panic levels.
 
 #### Testing
+
+To test:
+- Run the backend.py locally and expose it via ngrok.
+- Update the ngrok url in the code
+- Browse, using Chrome on Android, to the url corresponding to the branch you're looking at. e.g, for the ```faizan/feature``` branch, see [here](https://faizan-feature--breathein.netlify.app/). For the ```main`` branch, see [here](https://breathein.netlify.app/). 
+
 - Code to test the backend server:
 ```
 import requests
