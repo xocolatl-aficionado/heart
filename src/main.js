@@ -4,7 +4,7 @@ const heartRateMonitor = (function () {
 	////////////////////////////////////HELPERS////////////////////////////////////
 	const sendHeartRateDataToBackend = async (data) => {
 		try {
-			const response = await fetch('http://127.0.0.1:5000/get_bpm', {
+			const response = await fetch('https://e4a0-159-2-29-32.ngrok-free.app/get_bpm', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
