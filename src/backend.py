@@ -6,7 +6,7 @@ from flask_cors import cross_origin
 
 
 app = Flask(__name__)
-CORS(app, origins="http://127.0.0.1:3000")
+CORS(app)
 
 # Function to remove outliers using IQR
 def remove_outliers_iqr(data, factor=1.5):
@@ -77,7 +77,6 @@ def getHeartBeat(data):
 
 # API endpoint to process the data and return BPM
 @app.route('/get_bpm', methods=['POST'])
-@cross_origin(origins="http://127.0.0.1:3000")
 def get_bpm():
     data = request.json.get('data')  # Get the data from the request body
     if data is None or len(data) == 0:
