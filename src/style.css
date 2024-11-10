@@ -181,7 +181,6 @@ button {
 	transform: translateX(-50%);
 }
 
-
 #bpm-display {
 	text-align: center;
 }
@@ -269,36 +268,34 @@ button {
 	overflow-y: auto;
 }
 #breathing-circle-container {
-    display: flex;
-    justify-content: center;
+	display: flex;
+	justify-content: center;
 	margin-top: 30%;
-    margin-bottom: 2em;
+	margin-bottom: 2em;
 }
 
 #breathing-circle {
-    width: 100px; /* Starting size */
-    height: 100px; /* Starting size */
-    border-radius: 50%;
-    background-color: var(--graph-color);
-    animation: breathingAnimation 8s ease-in-out infinite; /* 4s inhale, 4s exhale */
+	width: 100px; /* Starting size */
+	height: 100px; /* Starting size */
+	border-radius: 50%;
+	background-color: blue;
+	animation: breathingAnimation 8s ease-in-out infinite; /* 4s inhale, 4s exhale */
 }
 
 @keyframes breathingAnimation {
-    0% {
-        transform: scale(1); /* Normal size at the start */
-    }
-    50% {
-        transform: scale(1.5); /* Grow to signify inhale */
-    }
-    100% {
-        transform: scale(1); /* Return to original size for exhale */
-    }
+	0% {
+		transform: scale(1); /* Normal size at the start */
+	}
+	50% {
+		transform: scale(1.5); /* Grow to signify inhale */
+	}
+	100% {
+		transform: scale(1); /* Return to original size for exhale */
+	}
 }
 .feedback-message {
-    font-size: 1rem;
-    color: #ff6666; /* Red color for visibility */
-    margin-top: 5px;
-    text-align: center;
+	font-size: 1rem;
+	color: #ff6666; /* Red color for visibility */
+	margin-top: 5px;
+	text-align: center;
 }
-
-

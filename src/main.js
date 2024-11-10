@@ -168,6 +168,7 @@ const heartRateMonitor = (function () {
 	////////////////////////////////////!HELPERS////////////////////////////////////
 
 	const breathingCircle = document.getElementById("breathing-circle");
+	let previousBpm = 0;
 
 	function startBreathingAnimation() {
 		breathingCircle.style.animationPlayState = "running";
@@ -175,6 +176,22 @@ const heartRateMonitor = (function () {
 
 	function stopBreathingAnimation() {
 		breathingCircle.style.animationPlayState = "paused";
+	}
+
+	function updateBreathingCircle(bpm, isStable) {
+		const duration = bpm ? Math.max(1, 60 / bpm) : 1; // Duration inversely related to BPM
+
+		// Update the animation duration
+		breathingCircle.style.animationDuration = `${duration}s`;
+
+		// Update color based on stability
+		breathingCircle.style.backgroundColor = isStable ? "green" : "red";
+	}
+
+	function calculateStability(currentBpm) {
+		const fluctuation = Math.abs(currentBpm - previousBpm);
+		previousBpm = currentBpm;
+		return fluctuation < 5; // Define stability threshold as needed
 	}
 
 	// Size of sampling image
@@ -512,6 +529,14 @@ const heartRateMonitor = (function () {
 			min: Math.min(...smoothedData),
 			max: Math.max(...smoothedData),
 		};
+
+		if (bpm) {
+			setBpmDisplay(Math.round(bpm));
+
+			// Check stability and update breathing circle
+			const isStable = calculateStability(bpm);
+			updateBreathingCircle(bpm, isStable);
+		}
 
 		// Return processed data and stats
 		return { smoothedData, peaks, bpm, dataStats };
