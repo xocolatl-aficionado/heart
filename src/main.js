@@ -4,14 +4,17 @@ const heartRateMonitor = (function () {
 	////////////////////////////////////HELPERS////////////////////////////////////
 	const sendHeartRateDataToBackend = async (data) => {
 		try {
-			const response = await fetch('https://e4a0-159-2-29-32.ngrok-free.app/get_bpm', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ data: data })  // Send the heart rate data
-			});
-	
+			const response = await fetch(
+				"https://c2e7-99-192-8-163.ngrok-free.app/get_bpm",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ data: data }), // Send the heart rate data
+				}
+			);
+
 			const result = await response.json();
 			if (result.bpm) {
 				console.log("Calculated BPM:", result.bpm);
@@ -23,129 +26,146 @@ const heartRateMonitor = (function () {
 			console.error("Error sending data to backend:", error);
 		}
 	};
-	
-	
-// Helper function to calculate the percentile of an array
- const percentile = (arr, p) => {
-    arr.sort((a, b) => a - b);
-    const index = Math.floor((p / 100) * (arr.length - 1));
-    return arr[index];
-};
 
-// Function to remove outliers using the IQR method
- const removeOutliersIQR = (data, factor = 1.5) => {
-    const Q1 = percentile(data, 25);
-    const Q3 = percentile(data, 75);
-    const IQR = Q3 - Q1;
-    const lowerBound = Q1 - factor * IQR;
-    const upperBound = Q3 + factor * IQR;
+	// Helper function to calculate the percentile of an array
+	const percentile = (arr, p) => {
+		arr.sort((a, b) => a - b);
+		const index = Math.floor((p / 100) * (arr.length - 1));
+		return arr[index];
+	};
 
-    let outliers = 0;
-	// Calculate the mean of the data (including outliers initially)
-    const mean = data.reduce((acc, value) => acc + value, 0) / data.length;
-	// Log the mean to make sure it's valid
-    // console.log("Calculated mean:", mean);
-	
-    const cleanedData = data.map(value => {
-        if (value >= lowerBound && value <= upperBound) {
-            return value;
-        } else {
-            outliers++;
-            return mean;
-        }
-    });
+	// Function to remove outliers using the IQR method
+	const removeOutliersIQR = (data, factor = 1.5) => {
+		const Q1 = percentile(data, 25);
+		const Q3 = percentile(data, 75);
+		const IQR = Q3 - Q1;
+		const lowerBound = Q1 - factor * IQR;
+		const upperBound = Q3 + factor * IQR;
 
-    console.log(`Number of outliers removed: ${outliers}`);
-    return cleanedData;
-};
+		let outliers = 0;
+		// Calculate the mean of the data (including outliers initially)
+		const mean = data.reduce((acc, value) => acc + value, 0) / data.length;
+		// Log the mean to make sure it's valid
+		// console.log("Calculated mean:", mean);
 
-// Function to apply a moving average filter to smooth the data
- const movingAverage = (data, windowSize) => {
-    const result = [];
-    for (let i = 0; i < data.length - windowSize + 1; i++) {
-        result.push(data.slice(i, i + windowSize).reduce((acc, val) => acc + val, 0) / windowSize);
-    }
-    return result;
-};
+		const cleanedData = data.map((value) => {
+			if (value >= lowerBound && value <= upperBound) {
+				return value;
+			} else {
+				outliers++;
+				return mean;
+			}
+		});
 
-// Function to detect peaks (local maxima) in the data
-const findPeaks = (data, width = 2, distance = 5, prominence = 0.001) => {
-    const peaks = [];
+		console.log(`Number of outliers removed: ${outliers}`);
+		return cleanedData;
+	};
 
-    // Loop through the data to identify peaks
-    for (let i = 1; i < data.length - 1; i++) {
-        // Check if the current point is a local maximum
-        if (data[i] > data[i - 1] && data[i] > data[i + 1]) {
-            // Simplify prominence check
-            const leftMax = Math.max(...data.slice(Math.max(0, i - distance), i));
-            const rightMax = Math.max(...data.slice(i + 1, i + 1 + distance));
+	// Function to apply a moving average filter to smooth the data
+	const movingAverage = (data, windowSize) => {
+		const result = [];
+		for (let i = 0; i < data.length - windowSize + 1; i++) {
+			result.push(
+				data
+					.slice(i, i + windowSize)
+					.reduce((acc, val) => acc + val, 0) / windowSize
+			);
+		}
+		return result;
+	};
 
-            const leftProminence = data[i] - leftMax;
-            const rightProminence = data[i] - rightMax;
+	// Function to detect peaks (local maxima) in the data
+	const findPeaks = (data, width = 2, distance = 5, prominence = 0.001) => {
+		const peaks = [];
 
-            // Debug the prominences
-            console.log(`Index: ${i}, Value: ${data[i]}, Left Prominence: ${leftProminence}, Right Prominence: ${rightProminence}`);
+		// Loop through the data to identify peaks
+		for (let i = 1; i < data.length - 1; i++) {
+			// Check if the current point is a local maximum
+			if (data[i] > data[i - 1] && data[i] > data[i + 1]) {
+				// Simplify prominence check
+				const leftMax = Math.max(
+					...data.slice(Math.max(0, i - distance), i)
+				);
+				const rightMax = Math.max(
+					...data.slice(i + 1, i + 1 + distance)
+				);
 
-            // Check if it satisfies the prominence threshold
-            if (leftProminence >= prominence && rightProminence >= prominence) {
-                // Check for width condition (optional simplification)
-                const leftWidth = findWidth(data, i, -1, width);
-                const rightWidth = findWidth(data, i, 1, width);
+				const leftProminence = data[i] - leftMax;
+				const rightProminence = data[i] - rightMax;
 
-                console.log(`Index: ${i}, Left Width: ${leftWidth}, Right Width: ${rightWidth}`);
+				// Debug the prominences
+				console.log(
+					`Index: ${i}, Value: ${data[i]}, Left Prominence: ${leftProminence}, Right Prominence: ${rightProminence}`
+				);
 
-                // Only consider it a peak if it satisfies the width condition
-                if (leftWidth >= width && rightWidth >= width) {
-                    peaks.push(i);
-                }
-            }
-        }
-    }
+				// Check if it satisfies the prominence threshold
+				if (
+					leftProminence >= prominence &&
+					rightProminence >= prominence
+				) {
+					// Check for width condition (optional simplification)
+					const leftWidth = findWidth(data, i, -1, width);
+					const rightWidth = findWidth(data, i, 1, width);
 
-    return peaks;
-};
+					console.log(
+						`Index: ${i}, Left Width: ${leftWidth}, Right Width: ${rightWidth}`
+					);
 
-// Helper function to find the width of the peak on one side
-const findWidth = (data, peakIndex, direction, minWidth) => {
-    let count = 0;
-    let i = peakIndex;
+					// Only consider it a peak if it satisfies the width condition
+					if (leftWidth >= width && rightWidth >= width) {
+						peaks.push(i);
+					}
+				}
+			}
+		}
 
-    // Traverse in the specified direction to check for width
-    while (
-        i >= 0 &&
-        i < data.length &&
-        data[i] > data[peakIndex] - minWidth * 0.01 // Adjust based on prominence
-    ) {
-        count++;
-        i += direction;
-    }
+		return peaks;
+	};
 
-    return count;
-};
+	// Helper function to find the width of the peak on one side
+	const findWidth = (data, peakIndex, direction, minWidth) => {
+		let count = 0;
+		let i = peakIndex;
 
-// Function to calculate heart rate (BPM) from peak intervals
- const calculateHeartRate = (peaks, frameRate = 60) => {
-    const timeInterval = 1 / frameRate;
-    const peakTimes = peaks.map(i => i * timeInterval); // Convert peak indices to time in seconds
+		// Traverse in the specified direction to check for width
+		while (
+			i >= 0 &&
+			i < data.length &&
+			data[i] > data[peakIndex] - minWidth * 0.01 // Adjust based on prominence
+		) {
+			count++;
+			i += direction;
+		}
 
-    const timeIntervals = peakTimes.slice(1).map((time, i) => time - peakTimes[i]);
-    const heartRates = timeIntervals.map(interval => 60 / interval); // BPM = 60 / time interval in seconds
+		return count;
+	};
 
-    return heartRates;
-};
+	// Function to calculate heart rate (BPM) from peak intervals
+	const calculateHeartRate = (peaks, frameRate = 60) => {
+		const timeInterval = 1 / frameRate;
+		const peakTimes = peaks.map((i) => i * timeInterval); // Convert peak indices to time in seconds
 
-// Function to get the calculated heart rate
-const getHeartRate = (heartRates) => {
-    const averageHeartRate = heartRates.reduce((acc, bpm) => acc + bpm, 0) / heartRates.length;
-    console.log(`Detected heart rate: ${averageHeartRate.toFixed(2)} BPM`);
+		const timeIntervals = peakTimes
+			.slice(1)
+			.map((time, i) => time - peakTimes[i]);
+		const heartRates = timeIntervals.map((interval) => 60 / interval); // BPM = 60 / time interval in seconds
 
-    heartRates.forEach((bpm, i) => {
-        console.log(`Interval ${i + 1}: ${bpm.toFixed(2)} BPM`);
-    });
-    return averageHeartRate
-};
+		return heartRates;
+	};
 
-////////////////////////////////////!HELPERS////////////////////////////////////
+	// Function to get the calculated heart rate
+	const getHeartRate = (heartRates) => {
+		const averageHeartRate =
+			heartRates.reduce((acc, bpm) => acc + bpm, 0) / heartRates.length;
+		console.log(`Detected heart rate: ${averageHeartRate.toFixed(2)} BPM`);
+
+		heartRates.forEach((bpm, i) => {
+			console.log(`Interval ${i + 1}: ${bpm.toFixed(2)} BPM`);
+		});
+		return averageHeartRate;
+	};
+
+	////////////////////////////////////!HELPERS////////////////////////////////////
 
 	const breathingCircle = document.getElementById("breathing-circle");
 
@@ -156,7 +176,7 @@ const getHeartRate = (heartRates) => {
 	function stopBreathingAnimation() {
 		breathingCircle.style.animationPlayState = "paused";
 	}
-	
+
 	// Size of sampling image
 	const IMAGE_WIDTH = 30;
 	const IMAGE_HEIGHT = 30;
@@ -239,18 +259,24 @@ const getHeartRate = (heartRates) => {
 		} else {
 			// Check for stability if brightness is in the correct range
 			const stability = calculateStability(brightnessBuffer);
-			if (stability > 0.02) { // Adjust this threshold as needed
+			if (stability > 0.02) {
+				// Adjust this threshold as needed
 				showFeedbackMessage("Hold steady, finger is moving too much.");
 			} else {
-				showFeedbackMessage("Perfect! Hold steady for accurate readings.");
+				showFeedbackMessage(
+					"Perfect! Hold steady for accurate readings."
+				);
 			}
 		}
 	}
 
 	// Function to calculate the standard deviation of brightness values in the buffer
 	function calculateStability(buffer) {
-		const mean = buffer.reduce((sum, value) => sum + value, 0) / buffer.length;
-		const variance = buffer.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / buffer.length;
+		const mean =
+			buffer.reduce((sum, value) => sum + value, 0) / buffer.length;
+		const variance =
+			buffer.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) /
+			buffer.length;
 		return Math.sqrt(variance);
 	}
 
@@ -278,7 +304,7 @@ const getHeartRate = (heartRates) => {
 	};
 
 	function showFeedbackMessage(message) {
-		const feedbackElement = document.getElementById('feedback');
+		const feedbackElement = document.getElementById("feedback");
 		feedbackElement.textContent = message;
 		feedbackElement.style.color = "#007BFF"; // Optional: Change color for better visibility
 	}
@@ -335,8 +361,6 @@ const getHeartRate = (heartRates) => {
 		);
 		return cameras[cameras.length - 1];
 	};
-
-
 
 	const startMonitoring = async () => {
 		resetBuffer();
@@ -432,26 +456,33 @@ const getHeartRate = (heartRates) => {
 	function saveDataAsJson() {
 		// Get the current date and time
 		const now = new Date();
-		
+
 		// Format the timestamp (e.g., "2024-11-08_14-30-45")
-		const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}`;
-		
+		const timestamp = `${now.getFullYear()}-${String(
+			now.getMonth() + 1
+		).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}_${String(
+			now.getHours()
+		).padStart(2, "0")}-${String(now.getMinutes()).padStart(
+			2,
+			"0"
+		)}-${String(now.getSeconds()).padStart(2, "0")}`;
+
 		// Create the JSON data
 		const jsonData = JSON.stringify(SAMPLE_BUFFER, null, 2);
-		
+
 		// Create a blob and a download link
 		const blob = new Blob([jsonData], { type: "application/json" });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement("a");
-		
+
 		// Set the filename with the timestamp
 		a.href = url;
 		a.download = `heart_rate_data_${timestamp}.json`;
-		
+
 		// Trigger the download
 		document.body.appendChild(a);
 		a.click();
-		
+
 		// Clean up
 		document.body.removeChild(a);
 		URL.revokeObjectURL(url);
@@ -459,35 +490,33 @@ const getHeartRate = (heartRates) => {
 
 	const processHeartRateData = (sampleBuffer) => {
 		// Step 1: Extract values from SAMPLE_BUFFER
-		const dataValues = sampleBuffer.map(sample => sample.value);
-	
+		const dataValues = sampleBuffer.map((sample) => sample.value);
+
 		// Step 2: Remove outliers using IQR method
 		const cleanedData = removeOutliersIQR(dataValues, 1.5);
-	
+
 		// Step 3: Smooth the data with a moving average filter (optional)
 		const smoothedData = movingAverage(cleanedData, 3);
-	
+
 		// Step 4: Detect peaks in the smoothed data
 		const peaks = findPeaks(smoothedData);
-	
+
 		// Step 5: Calculate the heart rate (BPM)
 		const heartRates = calculateHeartRate(peaks, 60);
-	
+
 		// Step 6: Display the heart rate
 		const bpm = getHeartRate(heartRates);
-	
+
 		// Step 7: Create a dataStats object for graphing (for scaling)
 		const dataStats = {
 			min: Math.min(...smoothedData),
-			max: Math.max(...smoothedData)
+			max: Math.max(...smoothedData),
 		};
-	
+
 		// Return processed data and stats
 		return { smoothedData, peaks, bpm, dataStats };
 	};
-	
-	
-	
+
 	const processFrame = async () => {
 		// Draw the current video frame onto the canvas
 		SAMPLING_CONTEXT.drawImage(
@@ -502,7 +531,7 @@ const getHeartRate = (heartRates) => {
 		checkFingerPlacement(SAMPLING_CANVAS, SAMPLING_CONTEXT);
 
 		const value = averageBrightness(SAMPLING_CANVAS, SAMPLING_CONTEXT);
-		
+
 		const time = Date.now();
 
 		SAMPLE_BUFFER.push({ value, time });
@@ -510,88 +539,92 @@ const getHeartRate = (heartRates) => {
 			SAMPLE_BUFFER.shift();
 		}
 
-		try{
-			const responseFromBackend = await sendHeartRateDataToBackend(SAMPLE_BUFFER);
-        
-        if (DEBUG) {
-            console.log("Graph Data:", SAMPLE_BUFFER);
-        }
+		try {
+			const responseFromBackend = await sendHeartRateDataToBackend(
+				SAMPLE_BUFFER
+			);
 
-        // Assuming the backend returns data like { bpm, dataStats }
-        const { bpm, dataStats } = responseFromBackend;
+			if (DEBUG) {
+				console.log("Graph Data:", SAMPLE_BUFFER);
+			}
 
-        // Update the BPM display (if the backend returns a bpm)
-        if (bpm) {
-            setBpmDisplay(Math.round(bpm));  // Update the BPM display
-        }
+			// Assuming the backend returns data like { bpm, dataStats }
+			const { bpm, dataStats } = responseFromBackend;
 
-        // Draw the graph with the dataStats received from the backend
-        if (dataStats) {
-            // Pass dataStats to the graph drawing function
-            drawGraph(dataStats);
-        }
-		}
-		catch (error) {
+			// Update the BPM display (if the backend returns a bpm)
+			if (bpm) {
+				setBpmDisplay(Math.round(bpm)); // Update the BPM display
+			}
+
+			// Draw the graph with the dataStats received from the backend
+			if (dataStats) {
+				// Pass dataStats to the graph drawing function
+				drawGraph(dataStats);
+			}
+		} catch (error) {
 			console.error("Error processing heart rate data:", error);
 		}
-		
 	};
 
 	document.addEventListener("keydown", (event) => {
-		if (event.key === 's') {
+		if (event.key === "s") {
 			console.log("Saving heart rate data...");
 			saveDataAsJson();
 		}
-	}
-);
-	const graphCanvas = document.getElementById('graph-canvas');
-	graphCanvas.addEventListener('click', saveDataAsJson);
-	
-	const applyStdDevFilter = (samples) => {
+	});
+	const graphCanvas = document.getElementById("graph-canvas");
+	graphCanvas.addEventListener("click", saveDataAsJson);
 
+	const applyStdDevFilter = (samples) => {
 		//console.log("Applying filter, samples: ", samples); // Log the samples data to check its structure
 
-
 		// Calculate the mean of the sample values
-		const mean = samples.reduce((acc, sample) => acc + sample.value, 0) / samples.length;
-	
+		const mean =
+			samples.reduce((acc, sample) => acc + sample.value, 0) /
+			samples.length;
+
 		// Calculate the standard deviation of the sample values
 		const stdDev = Math.sqrt(
-			samples.reduce((acc, sample) => acc + Math.pow(sample.value - mean, 2), 0) / samples.length
+			samples.reduce(
+				(acc, sample) => acc + Math.pow(sample.value - mean, 2),
+				0
+			) / samples.length
 		);
-	
+
 		// Define a threshold for outliers (e.g., 2 standard deviations)
 		const threshold = 2;
-	
+
 		// Filter out the outliers (those beyond 2 standard deviations)
-		const filtered = samples.filter((sample) => Math.abs(sample.value - mean) <= threshold * stdDev);
-		
+		const filtered = samples.filter(
+			(sample) => Math.abs(sample.value - mean) <= threshold * stdDev
+		);
+
 		// If all samples are outliers, return the original set (avoid returning empty array)
 		return filtered.length > 0 ? filtered : samples;
 	};
-	
-	const analyzeData = (samples) => {
 
+	const analyzeData = (samples) => {
 		//console.log ("SAMPLES ARRAY: "+ samples)
 		// Apply standard deviation filter to remove outliers
 		const filteredSamples = applyStdDevFilter(samples);
-	
+
 		// If we have fewer than 2 samples after filtering, don't calculate further
 		if (filteredSamples.length < 2) {
-	
 			return {
 				average: 0,
 				min: 0,
 				max: 0,
 				range: 0,
-				crossings: []
+				crossings: [],
 			};
 		}
-	
+
 		// Get the mean average value of the filtered samples
 		const average =
-			filteredSamples.map((sample) => sample.value).reduce((a, c) => a + c, 0) / filteredSamples.length;
-	
+			filteredSamples
+				.map((sample) => sample.value)
+				.reduce((a, c) => a + c, 0) / filteredSamples.length;
+
 		// Find the lowest and highest sample values in the filtered data
 		let min = filteredSamples[0].value;
 		let max = filteredSamples[0].value;
@@ -603,13 +636,13 @@ const getHeartRate = (heartRates) => {
 				min = sample.value;
 			}
 		});
-	
+
 		// The range of the change in values
 		const range = max - min;
-	
+
 		// Get the crossing points (edges) in the filtered data
 		const crossings = getAverageCrossings(filteredSamples, average);
-	
+
 		return {
 			average,
 			min,
@@ -618,7 +651,6 @@ const getHeartRate = (heartRates) => {
 			crossings,
 		};
 	};
-	
 
 	const getAverageCrossings = (samples, average) => {
 		// Get each sample at points where the graph has crossed below the average level
@@ -651,8 +683,6 @@ const getHeartRate = (heartRates) => {
 			(samples.length - 1);
 		return 60000 / averageInterval;
 	};
-
-
 
 	const drawGraph = (dataStats) => {
 		// Scaling of sample window to the graph width
