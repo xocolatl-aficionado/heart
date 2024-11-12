@@ -56,6 +56,5 @@ else
   # Push to the current branch
   CURRENT_BRANCH=$(git branch --show-current)
   git push origin "$CURRENT_BRANCH"
-  
-  echo "Changes pushed to remote. Netlify will redeploy the site."
+
 fi
