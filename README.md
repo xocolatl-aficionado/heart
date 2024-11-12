@@ -1,3 +1,17 @@
+#### How to run locally? ####
+
+- Check out the dev branch. 
+- ```chmod +x update_index.sh```
+- ```chmod +x deploy.sh```
+- ```chmod +x tunnel.sh```
+
+- ```./deploy.sh```
+
+This should do the following:
+- Check if the backend is in fact running, and if so, start up SSH tunnelling to port 5000.
+- Update index.html with the correct dynamic url that was generated in prior step, and push to remote branch
+- Use this within front end code, statically, to call the backend.
+- **TLDR**: ./deploy.sh does "everything" needed to put a local update on Netlify. ONLY RUN THIS ON THE DEV BRANCH. For example, if Adi works on this, he must work on adi/feature. 
 
 #### Demo
 
