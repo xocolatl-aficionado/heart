@@ -39,28 +39,18 @@ if [[ ! "$TUNNEL_URL" =~ \.lhr\.life$ ]]; then
   exit 1
 fi
 
-# Step 2: Update the .env file with the new URL
-ENV_FILE=".env"
-
-# Remove the existing .env file if it exists
-if [ -f "$ENV_FILE" ]; then
-  rm "$ENV_FILE"
-  echo "Old .env file deleted."
-fi
-
-# Create the .env file with the new URL
-echo "REACT_APP_BACKEND_URL=$TUNNEL_URL" > "$ENV_FILE"
-echo "Created new .env file with backend URL."
-
+# Step 4: Call the script to update index.html
+echo "Updating index.html with the new backend URL..."
+bash ./update_index.sh "$TUNNEL_URL" 
 
 # Step 3: Commit and push changes to your Git branch
 echo "Committing changes to Git..."
-git add "$ENV_FILE"
 
 # Check if there are changes to commit
 if git diff-index --quiet HEAD --; then
   echo "No changes to commit."
 else
+  git add src/index.html
   git commit -m "Update backend URL to $TUNNEL_URL"
   
   # Push to the current branch
