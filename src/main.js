@@ -4,13 +4,16 @@ const heartRateMonitor = (function () {
 	////////////////////////////////////HELPERS////////////////////////////////////
 	const sendHeartRateDataToBackend = async (data) => {
 		try {
-			const response = await fetch('https://e4a0-159-2-29-32.ngrok-free.app/get_bpm', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ data: data })  // Send the heart rate data
-			});
+			const response = await fetch(
+				"https://5588-99-192-8-163.ngrok-free.app/get_bpm",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ data: data }), // Send the heart rate data
+				}
+			);
 	
 			const result = await response.json();
 			if (result.bpm) {
