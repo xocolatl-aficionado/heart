@@ -16,7 +16,7 @@ This should do the following:
 
 #### Demo
 
-See [demo](breathein.netlify.app) on the Chrome browser on your phone. Works for only Android presently. Needs to have the backend running via Ngrok to get heart beats! 
+See [demo](breathein.netlify.app) on the Chrome browser on your phone. Works for only Android presently. Needs to have the backend running to get heart beats! 
 
 #### Features
 
@@ -80,8 +80,7 @@ See [demo](breathein.netlify.app) on the Chrome browser on your phone. Works for
 #### Testing
 
 To test:
-- Run the backend.py locally and expose it via ngrok.
-- Update the ngrok url in the code
+- Run the backend.py locally and expose it via SSH tunnelling (deploy.sh)
 - Browse, using Chrome on Android, to the url corresponding to the branch you're looking at. e.g, for the ```faizan/feature``` branch, see [here](https://faizan-feature--breathein.netlify.app/). For the ```main`` branch, see [here](https://breathein.netlify.app/). 
 
 - Code to test the backend server:
@@ -90,7 +89,7 @@ import requests
 import json
 
 # Define the URL of your deployed endpoint
-url = "https://e4a0-159-2-29-32.ngrok-free.app/get_bpm"
+url = "https://<your-url>/get_bpm"
 
 # Sample input data (list of dictionaries with 'value' and 'time')
 sample_data = {
@@ -191,7 +190,7 @@ print(f"Detected peak indices: {peaks}")
 - ```npm install ```
 - Every commit to the ```adi/feature```, or ```faizan/feature``` or ```main``` branch will be auto deployed to the respective demo url (Netlify). 
  
-- Need to run the backend separately (``` python3 backend.py```) on a local machine and expose it via ngrok. The Ngrok url is currently hardcoded into the codebase, but this will change each time ngrok is restarted. Please set acordingly as per [docs](https://ngrok.com/docs/getting-started/). 
+- Need to run the backend separately (``` python3 backend.py```) on a local machine via the deploy script. The backend url is currently statically defined in the html script tag, and will change each time a deploy is done. 
 
 #### Credits: This [repo](https://github.com/richrd/heart-rate-monitor), provided us with a way to begin w/o the hassle of a mobile app setup and play with sensor readings immediately. I'm extremely grateful for this. 
 We have thereafter enhanced the app with (more)stable heart rates, and breathing routines, with the intent to turn it into a panic-diffusing human computer interative (HCI) application. 
