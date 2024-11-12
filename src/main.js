@@ -4,7 +4,8 @@ const heartRateMonitor = (function () {
 	////////////////////////////////////HELPERS////////////////////////////////////
 	const sendHeartRateDataToBackend = async (data) => {
 		try {
-			const response = await fetch('https://46b3f66accedbc.lhr.life/get_bpm', {
+			const backendUrl = process.env.REACT_APP_BACKEND_URL;
+			const response = await fetch(`${backendUrl}/get_bpm`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
