@@ -33,6 +33,12 @@ if [ -z "$TUNNEL_URL" ]; then
   exit 1
 fi
 
+# Step 2: Ensure the URL ends with ".lhr.life"
+if [[ ! "$TUNNEL_URL" =~ \.lhr\.life$ ]]; then
+  echo "The URL does not end with .lhr.life. Exiting."
+  exit 1
+fi
+
 # Step 2: Update the .env file with the new URL
 ENV_FILE=".env"
 
