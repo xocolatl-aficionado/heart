@@ -42,21 +42,16 @@ fi
 # Step 2: Update the .env file with the new URL
 ENV_FILE=".env"
 
-# If the .env file exists, update it. Otherwise, create it.
+# Remove the existing .env file if it exists
 if [ -f "$ENV_FILE" ]; then
-  if grep -q "REACT_APP_BACKEND_URL=" "$ENV_FILE"; then
-    # Update existing line
-    sed -i'' -e "s|REACT_APP_BACKEND_URL=.*|REACT_APP_BACKEND_URL=$TUNNEL_URL|" "$ENV_FILE"
-  else
-    # Append if the variable is not already set
-    echo "REACT_APP_BACKEND_URL=$TUNNEL_URL" >> "$ENV_FILE"
-  fi
-else
-  # Create the .env file if it doesn't exist
-  echo "REACT_APP_BACKEND_URL=$TUNNEL_URL" > "$ENV_FILE"
+  rm "$ENV_FILE"
+  echo "Old .env file deleted."
 fi
 
-echo "Updated $ENV_FILE with new backend URL."
+# Create the .env file with the new URL
+echo "REACT_APP_BACKEND_URL=$TUNNEL_URL" > "$ENV_FILE"
+echo "Created new .env file with backend URL."
+
 
 # Step 3: Commit and push changes to your Git branch
 echo "Committing changes to Git..."
