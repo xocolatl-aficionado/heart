@@ -6,6 +6,7 @@
 - ```chmod +x tunnel.sh```
 
 - ```./deploy.sh```
+- ```killall ssh``` before you run the script again. 
 
 This should do the following:
 - Check if the backend is in fact running, and if so, start up SSH tunnelling to port 5000.
