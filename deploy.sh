@@ -51,10 +51,12 @@ if git diff-index --quiet HEAD --; then
   echo "No changes to commit."
 else
   git add src/index.html
-  git commit -m "Update backend URL to $TUNNEL_URL"
-  
-  # Push to the current branch
-  CURRENT_BRANCH=$(git branch --show-current)
-  git push origin "$CURRENT_BRANCH"
+  if ! git diff-index --quiet HEAD -- src/index.html; then
+    git commit -m "Update backend URL to $TUNNEL_URL"
+    git push origin $(git branch --show-current)
+    echo "Changes pushed to remote."
+  else
+    echo "No changes to commit."
+fi
 
 fi
