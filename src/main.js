@@ -5,6 +5,7 @@ const heartRateMonitor = (function () {
 	const sendHeartRateDataToBackend = async (data) => {
 		try {
 			const backendUrl = process.env.REACT_APP_BACKEND_URL;
+			console.log('Backend URL:', backendUrl);
 			const response = await fetch(`${backendUrl}/get_bpm`, {
 				method: 'POST',
 				headers: {
